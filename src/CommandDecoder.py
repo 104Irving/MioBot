@@ -34,10 +34,19 @@ def bool_seek_by_uid(key_word_group, data):
 
 # 解析指令并调用对应发送消息api的类
 class CommandDecoder(object):
-    def __init__(self):
+    def __init__(self, picture_file_path):
         self.bot = PostMessage()
-        self.picture_path = "E:\\Picture\\Artwork\\"
         self.config_path = "./config"
+        self.picture_file_path = picture_file_path
+        self.picture_path = f"{self.picture_file_path}Artwork\\"
+
+        self.user_dict = {}
+        with open(f"{self.picture_file_path}Uid_List.txt", 'rt', encoding="utf-8") as f:
+            while True:
+                line = f.readline()
+                if line == "": break
+                line = line.split(":")
+                self.user_dict[line[0]] = line[1]
 
     def __del__(self):
         pass
@@ -49,17 +58,25 @@ class CommandDecoder(object):
 
         out_come = []
         for pid in pid_list:
-            with open(f"{self.picture_path}{pid}\\tags.json") as f:
-                data = json.load(f)
+            with open(f"{self.picture_path}{pid}\\tags.json", "rt", encoding="utf-8") as f:
+                data = dict(json.load(f))
                 if 'r18_mode' not in data or data['r18_mode'] == 'r18':
                     continue
 
                 if mode_func(keyword_group, data):
                     out_come.append(pid)
-
-                # if is_substr(keyword_group, data["origin_tag"]) or is_substr(keyword_group, data["trans_tag"]):
-                #     out_come.append(pid)
         return out_come
+
+    def search_uid_by_name(self, key_word_group):
+        uid_list = []
+        for key_word in key_word_group:
+            if key_word.isdigit():
+                uid_list.append(key_word)
+                continue
+            for uid in self.user_dict.keys():
+                if key_word in self.user_dict[uid]:
+                    uid_list.append(uid)
+        return uid_list
 
     # 接收指令源格式并解析翻译调用各个指令的函数
     def command_decoder(self, data, group_id):
@@ -112,7 +129,12 @@ class CommandDecoder(object):
                 out_come.append(pid if os.path.isdir(f'{self.picture_path}{pid}') else None)
         # 按照uid检索
         elif "u" in mode:
-            out_come = self.search_pic(keyword_group, bool_seek_by_uid)
+            uid_list = self.search_uid_by_name(keyword_group)
+            if not uid_list:
+                payload = msg_append_text(payload, f"检索到{len(out_come)}个作者")
+                return self.bot.send_group_msg(payload)
+
+            out_come = self.search_pic(uid_list, bool_seek_by_uid)
 
         # 检索结果为0
         if not out_come:
@@ -121,7 +143,6 @@ class CommandDecoder(object):
 
         if "r" in mode:
             pid = choice(out_come)
-            print(pid)
 
             with open(f"{self.picture_path}{pid}\\tags.json") as f:
                 data = json.load(f)
@@ -130,7 +151,7 @@ class CommandDecoder(object):
             pic_list.remove("tags.json")
 
             payload = msg_append_text(payload, f"检索到{len(out_come)}个结果, 选择pid:{pid}作为结果\n")
-            payload = msg_append_text(payload, f"作者uid:{data["UID"]}\n")
+            payload = msg_append_text(payload, f"作者:{self.user_dict[data["UID"]]}uid:{data["UID"]}\n")
             payload = msg_append_text(payload, f"更新时间:{data["uploaded_date"].split('T')[0]}\n")
             for p in pic_list:
                 payload = msg_append_pic(payload, f"{self.picture_path}{pid}\\{p}")
@@ -166,6 +187,11 @@ class CommandDecoder(object):
 
 
 def main():
+    with open(f"E:\\Picture\\Artwork\\{1127456}\\tags.json") as f:
+        data = dict(json.load(f))
+    uid = ["217707"]
+    # test = CommandDecoder()
+    print(data["UID"] in uid)
     pass
 
 

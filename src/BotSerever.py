@@ -14,9 +14,9 @@ base_url = "http://127.0.0.1:3000"
 # 负责调用NapCat的API发送QQ消息的类
 def response_callback(response):
     if response.status_code == 200:
-        print("Message sent successfully")
+        print(f"[bot][Call_back]: Message sent successfully!")
     else:
-        print("Failed to send message")
+        print(f"[bot][Call_back]: Failed to send message!")
         print(response.status_code, response.text)
 
 
