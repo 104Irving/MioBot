@@ -79,7 +79,7 @@ class CommandDecoder(object):
         return uid_list
 
     # 接收指令源格式并解析翻译调用各个指令的函数
-    def command_decoder(self, data, group_id):
+    def command_decoder(self, data):
         msg = data["message"][0]
 
         # 非文本类型消息暂不解析
@@ -98,7 +98,7 @@ class CommandDecoder(object):
         pass
 
     def post_picture(self, data):
-        payload = self.bot.payload
+        payload = get_payload()
         payload = msg_append_group_id(payload, data['group_id'])
 
         command = data["message"][0]["data"]['text']
@@ -113,7 +113,8 @@ class CommandDecoder(object):
 
             # 如果存在关键字组，则分割成单词列表，否则为一个空列表
             keyword_group = match.group(2)
-            keyword_group = keyword_group.split() if keyword_group else []
+            keyword_group = keyword_group.strip().split() if keyword_group else []
+
         else:
             payload = msg_append_text(payload, 'Invalid dice command!')
             return self.bot.send_group_msg(payload)
@@ -138,7 +139,8 @@ class CommandDecoder(object):
 
         # 检索结果为0
         if not out_come:
-            payload = msg_append_text(payload, f"检索到{len(out_come)}个结果")
+            # payload = msg_append_text(payload, f"检索到{len(out_come)}个结果")
+            payload = msg_append_text(payload, f"罢工了喵")
             return self.bot.send_group_msg(payload)
 
         if "r" in mode:
@@ -151,7 +153,7 @@ class CommandDecoder(object):
             pic_list.remove("tags.json")
 
             payload = msg_append_text(payload, f"检索到{len(out_come)}个结果, 选择pid:{pid}作为结果\n")
-            payload = msg_append_text(payload, f"作者:{self.user_dict[data["UID"]]}uid:{data["UID"]}\n")
+            # payload = msg_append_text(payload, f"作者:{self.user_dict[data["UID"]]}uid:{data["UID"]}\n")
             payload = msg_append_text(payload, f"更新时间:{data["uploaded_date"].split('T')[0]}\n")
             for p in pic_list:
                 payload = msg_append_pic(payload, f"{self.picture_path}{pid}\\{p}")
@@ -159,7 +161,7 @@ class CommandDecoder(object):
 
     # 投骰子的指令
     def roll_dice(self, data):
-        payload = self.bot.payload
+        payload = get_payload()
         payload = msg_append_group_id(payload, data['group_id'])
 
         message = data["message"][0]["data"]['text']

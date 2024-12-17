@@ -1,5 +1,4 @@
 import json
-
 from src.CommandDecoder import CommandDecoder
 
 # 使用flask建立一个简单的监听后端
@@ -8,6 +7,10 @@ from flask import Flask, request
 # import subprocess
 
 app = Flask(__name__)
+with open("./config/config.json", "rt", encoding="utf-8") as f:
+    j_data = json.load(f)
+post_bot = CommandDecoder(j_data["picture_file_path"])
+group = j_data["monitor_group"]
 # NapCatQQ API的基础URL
 base_url = "http://127.0.0.1:3000"
 
@@ -15,10 +18,7 @@ base_url = "http://127.0.0.1:3000"
 @app.route('/', methods=['POST'])
 def receive_event():
     # subprocess.run([".\\NapCat\\launcher.bat", '2032509947'], check=True)
-    with open("./config/config.json", "rt", encoding="utf-8") as f:
-        data = json.load(f)
-    post_bot = CommandDecoder(data["picture_file_path"])
-    group = data["monitor_group"]
+
     while True:
         data = request.json
         # print("Received event:", data)
@@ -33,11 +33,10 @@ def receive_event():
             # if 'test' in message:
             #     send_group_message(group, "hello world")
 
-            post_bot.command_decoder(data, group)
+            post_bot.command_decoder(data)
 
         return "OK", 200
 
 
 if __name__ == '__main__':
-    # send_group_picture(860801719)
     app.run(host='0.0.0.0', port=7777)

@@ -1,12 +1,12 @@
 import json
 
 # 使用flask建立一个简单的监听后端
-from flask import Flask, request
+# from flask import Flask, request
 
 # 使用request库
 import requests
 
-app = Flask(__name__)
+# app = Flask(__name__)
 # NapCatQQ API的基础URL
 base_url = "http://127.0.0.1:3000"
 
@@ -45,6 +45,12 @@ def msg_append_text(payload, message):
     return payload
 
 
+def get_payload():
+    return {
+        "message": [],
+    }
+
+
 class PostMessage(object):
     def __init__(self):
         self.token = "a196wal9k0h"
@@ -53,9 +59,9 @@ class PostMessage(object):
             "Authorization": self.token
         }
 
-        self.payload = {
-            "message": [],
-        }
+        # self.payload = {
+        #     "message": [],
+        # }
 
     def send_group_msg(self, params):
         url = f"{base_url}/send_group_msg"
