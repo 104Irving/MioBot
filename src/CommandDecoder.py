@@ -1,5 +1,6 @@
 import os
 import re
+import time
 from random import choice, randint
 
 from src.BotSerever import *
@@ -41,6 +42,14 @@ class CommandDecoder(object):
         self.picture_path = f"{self.picture_file_path}Artwork\\"
 
         self.user_dict = {}
+
+        with open(f"{self.picture_file_path}Mapping\\Tag_Pic_mapping.json", 'rt', encoding="utf-8") as f:
+            self.tag_pic_mapping = json.load(f)
+            # print(self.tag_pic_mapping)
+        with open(f"{self.picture_file_path}Mapping\\User_Pic_mapping.json", 'rt', encoding="utf-8") as f:
+            self.user_pic_mapping = json.load(f)
+            # print(self.user_pic_mapping)
+
         with open(f"{self.picture_file_path}Uid_List.txt", 'rt', encoding="utf-8") as f:
             while True:
                 line = f.readline()
@@ -52,6 +61,7 @@ class CommandDecoder(object):
         pass
 
     def search_pic(self, keyword_group, mode_func):
+        start_time = time.perf_counter()
         pid_list = os.listdir(self.picture_path)
         if not keyword_group:
             return pid_list
@@ -65,7 +75,22 @@ class CommandDecoder(object):
 
                 if mode_func(keyword_group, data):
                     out_come.append(pid)
-        return out_come
+        t1 = time.perf_counter() - start_time
+        start_time = time.perf_counter()
+
+        if mode_func == bool_seek_by_tag:
+            for keyword in keyword_group:
+                for tag in self.tag_pic_mapping.keys():
+                    if keyword in tag:
+                        out_come = list(set(out_come).union(set(self.tag_pic_mapping[tag])))
+        elif mode_func == bool_seek_by_uid:
+            for keyword in keyword_group:
+                for uid in self.user_pic_mapping.keys():
+                    if keyword == uid:
+                        out_come = list(set(out_come).union(set(self.tag_pic_mapping[uid])))
+        t2 = time.perf_counter() - start_time
+        print(out_come)
+        return t1, t2, out_come
 
     def search_uid_by_name(self, key_word_group):
         uid_list = []
@@ -189,12 +214,26 @@ class CommandDecoder(object):
 
 
 def main():
-    with open(f"E:\\Picture\\Artwork\\{1127456}\\tags.json") as f:
-        data = dict(json.load(f))
-    uid = ["217707"]
-    # test = CommandDecoder()
-    print(data["UID"] in uid)
-    pass
+    test = CommandDecoder("E:\\Picture\\")
+    total_t1 = 0
+    total_t2 = 0
+    outcome = []
+    tag_num = len(test.tag_pic_mapping.keys())
+    for key in test.tag_pic_mapping.keys():
+        t1, t2, outcome = test.search_pic([key], bool_seek_by_tag)
+        total_t1 = total_t1 + t1
+        total_t2 = total_t2 + t2
+        print(f"t1:{t1}\nt2:{t2}")
+
+    print()
+    print(f"t1_total:{total_t1}\nt1_ave:{total_t1/tag_num}\n")
+    print(f"t2_total:{total_t2}\nt2_ave:{total_t2/tag_num}\n")
+    # with open(f"E:\\Picture\\Artwork\\{1127456}\\tags.json") as f:
+    #     data = dict(json.load(f))
+    # uid = ["217707"]
+    # # test = CommandDecoder()
+    # print(data["UID"] in uid)
+    # pass
 
 
 if __name__ == '__main__':
